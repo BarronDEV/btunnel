@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="BTunnel — Secure, peer-to-peer web sharing. Connect directly to local development servers and Docker services through your browser.">
+    <title>BTunnel — Share Local Web App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #09090b;
+            --panel: #18181b;
+            --border: #27272a;
+            --border-hover: #3f3f46;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --text-dim: #52525b;
+
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.05);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.05);
+            --warning: #f59e0b;
+
+            --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'Geist Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border);
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo span {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+        }
+
+        main {
+            flex: 1;
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .state-container {
+            display: none;
+        }
+
+        .state-container.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+        }
+
+        .hero-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 0.85rem;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--border-hover);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-dim);
+        }
+
+        .btn {
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .btn-danger {
+            background: var(--error-bg);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+        }
+
+        /* Steps & Status */
+        .status-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .status-dot.connecting {
+            background: var(--warning);
+            animation: pulse 1s infinite alternate;
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+
+        @keyframes pulse {
+            from {
+                opacity: 0.4;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .status-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        .status-step.active {
+            color: var(--text);
+        }
+
+        .status-step.done {
+            color: var(--success);
+        }
+
+        .status-step.error {
+            color: var(--error);
+        }
+
+        /* Connected View */
+        .banner {
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: var(--success-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .banner h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .banner p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.15rem;
+        }
+
+        .log-panel {
+            background: #0d0d0f;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.85rem;
+            max-height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .log-row {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .log-row.info {
+            color: var(--text-muted);
+        }
+
+        .log-row.success {
+            color: var(--success);
+        }
+
+        .log-row.error {
+            color: var(--error);
+        }
+
+        .log-row .time {
+            color: var(--text-dim);
+            margin-right: 0.4rem;
+        }
+
+        /* Error View */
+        .error-card {
+            text-align: center;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: var(--error-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .error-card h2 {
+            font-size: 1.1rem;
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .error-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        footer {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--text);
+        }
+
+        @media (max-width: 480px) {
+            footer {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+                padding: 1.5rem 1rem;
+            }
+
+            header {
+                padding: 1rem;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">
+            BTUNNEL<span>/share</span>
+        </a>
+        <span class="badge">P2P ENCRYPTED</span>
+    </header>
+
+    <main>
+        <!-- State 1: Join / Enter Token -->
+        <div id="state-join" class="state-container active">
+            <div>
+                <h1 class="hero-title">Connect to Share</h1>
+                <p class="hero-desc">Enter the share token to initialize a direct peer-to-peer connection to the hosted
+                    application.</p>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="signaling-input" class="input-field"
+                    placeholder="Custom Signaling Server (optional)" autocomplete="off" spellcheck="false">
+                <input type="text" id="token-input" class="input-field" placeholder="bt-token..." autocomplete="off"
+                    spellcheck="false">
+                <button id="btn-connect" class="btn btn-primary" onclick="startConnection()">
+                    Establish Connection
+                </button>
+            </div>
+
+            <div class="status-box" id="connection-status" style="display: none;">
+                <div class="status-header">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-label">Initializing...</span>
+                </div>
+                <div class="status-step" id="step-signaling">
+                    <span class="step-icon">○</span> Connecting to signaling server...
+                </div>
+                <div class="status-step" id="step-webrtc">
+                    <span class="step-icon">○</span> Establishing WebRTC P2P connection...
+                </div>
+                <div class="status-step" id="step-datachannel">
+                    <span class="step-icon">○</span> Creating data channels...
+                </div>
+                <div class="status-step" id="step-proxy">
+                    <span class="step-icon">○</span> Registering Service Worker proxy...
+                </div>
+            </div>
+        </div>
+
+        <!-- State 2: Connected -->
+        <div id="state-connected" class="state-container">
+            <div class="banner">
+                <h2>Connection Active</h2>
+                <p>Traffic is fully E2E encrypted between your browser and the host.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-rtt">--</div>
+                    <div class="stat-label">RTT</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-sent">0 B</div>
+                    <div class="stat-label">Sent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-received">0 B</div>
+                    <div class="stat-label">Received</div>
+                </div>
+            </div>
+
+            <a href="/" target="_blank" class="btn btn-primary">
+                Open Application
+            </a>
+
+            <button class="btn btn-danger" onclick="disconnect()">
+                Terminate Connection
+            </button>
+
+            <div class="log-panel" id="log-container"></div>
+        </div>
+
+        <!-- State 3: Error -->
+        <div id="state-error" class="state-container">
+            <div class="error-card">
+                <h2>Handshake Failed</h2>
+                <p id="error-message">Unable to bridge peer-to-peer connection.</p>
+                <button class="btn btn-primary" onclick="resetToJoin()">
+                    Retry Setup
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>BTunnel — Secure Outbound-Only P2P Proxy</p>
+        <p><a href="https://github.com/barronDEV/btunnel" target="_blank">View GitHub</a></p>
+    </footer>
+
+    <script src="webrtc-client.js"></script>
+    <script>
+        // UI State Management
+        function showState(stateId) {
+            document.querySelectorAll('.state-container').forEach(el => el.classList.remove('active'));
+            document.getElementById('state-' + stateId).classList.add('active');
+        }
+
+        function updateStep(stepId, state) {
+            const el = document.getElementById('step-' + stepId);
+            el.className = 'status-step ' + state;
+            const icon = el.querySelector('.step-icon');
+            if (state === 'done') icon.textContent = '✓';
+            else if (state === 'active') icon.textContent = '●';
+            else if (state === 'error') icon.textContent = '×';
+            else icon.textContent = '○';
+        }
+
+        function updateStatusDot(state) {
+            const dot = document.getElementById('status-dot');
+            dot.className = 'status-dot ' + state;
+            const label = document.getElementById('status-label');
+            if (state === 'connecting') label.textContent = 'Connecting...';
+            else if (state === 'connected') label.textContent = 'Connected';
+            else if (state === 'error') label.textContent = 'Failed';
+        }
+
+        // Add log entry
+        function addLog(message, level) {
+            const container = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = 'log-row ' + (level || 'info');
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = '<span class="time">[' + time + ']</span>' + message;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Connection Logic
+        let tunnelClient = null;
+
+        async function startConnection() {
+            const token = document.getElementById('token-input').value.trim();
+            if (!token) {
+                document.getElementById('token-input').focus();
+                return;
+            }
+
+            document.getElementById('btn-connect').disabled = true;
+            document.getElementById('connection-status').style.display = 'flex';
+            updateStatusDot('connecting');
+
+            try {
+                // Step 1: Connect to signaling server
+                updateStep('signaling', 'active');
+                tunnelClient = new BTunnelClient({
+                    signalingURL: getSignalingURL(),
+                    token: token,
+                    onStateChange: handleStateChange,
+                    onStats: handleStats,
+                    onLog: addLog,
+                });
+
+                await tunnelClient.connectSignaling();
+                updateStep('signaling', 'done');
+
+                // Step 2: Establish WebRTC P2P connection
+                updateStep('webrtc', 'active');
+                await tunnelClient.establishPeerConnection();
+                updateStep('webrtc', 'done');
+
+                // Step 3: Open data channels
+                updateStep('datachannel', 'active');
+                await tunnelClient.waitForDataChannels();
+                updateStep('datachannel', 'done');
+
+                // Step 4: Register Service Worker
+                updateStep('proxy', 'active');
+                await registerServiceWorker();
+                tunnelClient.enableWebSocketOverride();
+                updateStep('proxy', 'done');
+
+                // All done - switch to connected state
+                updateStatusDot('connected');
+                setTimeout(() => {
+                    showState('connected');
+                    addLog('Tunnel established successfully', 'success');
+                    startStatsUpdater();
+                }, 500);
+
+            } catch (err) {
+                console.error('Connection failed:', err);
+                updateStatusDot('error');
+
+                // Mark current step as error
+                ['signaling', 'webrtc', 'datachannel', 'proxy'].forEach(step => {
+                    const el = document.getElementById('step-' + step);
+                    if (el.classList.contains('active')) {
+                        updateStep(step, 'error');
+                    }
+                });
+
+                setTimeout(() => {
+                    document.getElementById('error-message').textContent = err.message || 'Unable to bridge peer-to-peer connection.';
+                    showState('error');
+                }, 1000);
+            }
+        }
+
+        function handleStateChange(state) {
+            if (state === 'disconnected') {
+                showState('error');
+                document.getElementById('error-message').textContent = 'The P2P connection was closed.';
+            }
+        }
+
+        let statsInterval = null;
+        function startStatsUpdater() {
+            statsInterval = setInterval(() => {
+                if (tunnelClient) {
+                    const stats = tunnelClient.getStats();
+                    document.getElementById('stat-rtt').textContent = stats.rtt >= 0 ? stats.rtt + ' ms' : '--';
+                    document.getElementById('stat-sent').textContent = formatBytes(stats.bytesSent);
+                    document.getElementById('stat-received').textContent = formatBytes(stats.bytesReceived);
+                }
+            }, 1000);
+        }
+
+        function handleStats(stats) {
+            // Real-time stats callback
+        }
+
+        let isDisconnecting = false;
+
+        window.addEventListener('beforeunload', (e) => {
+            if (tunnelClient && !isDisconnecting) {
+                e.preventDefault();
+                e.returnValue = 'Tünel bağlantısı aktif. Sayfayı yenilerseniz veya kapatırsanız bağlantınız kopacaktır.';
+                return e.returnValue;
+            }
+        });
+
+        function disconnect() {
+            isDisconnecting = true;
+            if (tunnelClient) {
+                tunnelClient.close();
+                tunnelClient = null;
+            }
+            if (statsInterval) {
+                clearInterval(statsInterval);
+                statsInterval = null;
+            }
+            resetToJoin();
+            addLog('Disconnected by user', 'info');
+        }
+
+        function resetToJoin() {
+            isDisconnecting = false;
+            showState('join');
+            document.getElementById('btn-connect').disabled = false;
+            document.getElementById('connection-status').style.display = 'none';
+            updateStatusDot('');
+            ['signaling', 'webrtc', 'datachannel', 'proxy'].forEach(step => {
+                updateStep(step, '');
+            });
+        }
+
+        let heartbeatInterval = null;
+        let globalRegistration = null;
+
+        async function registerServiceWorker() {
+            if (!('serviceWorker' in navigator)) {
+                throw new Error('Service Workers are not supported in this browser');
+            }
+
+            const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            await registration.update();
+            await navigator.serviceWorker.ready;
+            globalRegistration = registration;
+
+            // Initial port setup
+            sendPortToServiceWorker(registration);
+
+            // Listen for request port messages from Service Worker (in case it restarts/wakes up)
+            navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+            navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+
+            // Periodically ping Service Worker to keep it alive and trigger port recovery if needed
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(() => {
+                if (tunnelClient && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'PING_TUNNEL' });
+                }
+            }, 3000);
+        }
+
+        function handleServiceWorkerMessage(event) {
+            if (event.data && event.data.type === 'REQUEST_TUNNEL_PORT') {
+                console.log('[btunnel-page] Service Worker requested tunnel port recovery.');
+                if (globalRegistration) {
+                    sendPortToServiceWorker(globalRegistration);
+                }
+            }
+        }
+
+        function sendPortToServiceWorker(registration) {
+            if (tunnelClient && registration.active) {
+                const messageChannel = new MessageChannel();
+                registration.active.postMessage({
+                    type: 'INIT_TUNNEL',
+                    port: messageChannel.port2,
+                }, [messageChannel.port2]);
+
+                // Listen for fetch requests from the Service Worker
+                messageChannel.port1.onmessage = async (event) => {
+                    const { id, method, url, headers, body } = event.data;
+                    try {
+                        const response = await tunnelClient.proxyRequest({ id, method, url, headers, body });
+                        messageChannel.port1.postMessage({
+                            id: id,
+                            status: response.status_code,
+                            headers: response.headers,
+                            body: response.body,
+                        });
+                    } catch (err) {
+                        messageChannel.port1.postMessage({
+                            id: id,
+                            status: 502,
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: 'btunnel proxy error: ' + err.message,
+                        });
+                    }
+                };
+            }
+        }
+
+        function getSignalingURL() {
+            const inputVal = document.getElementById('signaling-input').value.trim();
+            if (inputVal) {
+                return inputVal;
+            }
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const port = window.location.port ? ':' + window.location.port : '';
+            return protocol + '//' + window.location.hostname + port + '/ws';
+        }
+
+        // Allow Enter key to connect
+        document.getElementById('token-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') startConnection();
+        });
+
+        // Auto-fill token from URL hash
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                document.getElementById('token-input').value = hash;
+            }
+            const pathMatch = window.location.pathname.match(/\/share\/(.+)/);
+            if (pathMatch) {
+                document.getElementById('token-input').value = pathMatch[1];
+                startConnection();
+            }
+        });
+    </script>
+</body>
+
+</html>

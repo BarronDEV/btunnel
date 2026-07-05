@@ -1,0 +1,31 @@
+# BTunnel Sidecar Agent Dockerfile
+#
+# Multi-stage build to compile and package the sidecar agent.
+
+# ── Stage 1: Build ──
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /btunnel-sidecar-agent \
+    ./cmd/sidecar-agent/
+
+# ── Stage 2: Runtime ──
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=builder /btunnel-sidecar-agent /usr/local/bin/btunnel-sidecar-agent
+
+# Set up socket volume directory
+RUN mkdir -p /tmp/btunnel && chmod 777 /tmp/btunnel
+VOLUME /tmp/btunnel
+
+ENTRYPOINT ["btunnel-sidecar-agent"]

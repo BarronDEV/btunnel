@@ -1,0 +1,45 @@
+# BTunnel Signaling Server Dockerfile
+#
+# Multi-stage build: compiles the Go binary and creates a minimal runtime image.
+
+# ── Stage 1: Build ──
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates
+
+# Copy module files first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the signaling server binary
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /btunnel-signaling \
+    ./signaling-server/
+
+# ── Stage 2: Runtime ──
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates wget
+
+# Create non-root user
+RUN adduser -D -u 1000 btunnel
+USER btunnel
+
+WORKDIR /app
+
+COPY --from=builder /btunnel-signaling /usr/local/bin/btunnel-signaling
+COPY --from=builder --chown=btunnel:btunnel /app/web ./web
+
+EXPOSE 9090
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget --spider -q --no-check-certificate https://localhost:9090/health || exit 1
+
+ENTRYPOINT ["btunnel-signaling"]

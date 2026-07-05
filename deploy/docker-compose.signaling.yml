@@ -1,0 +1,47 @@
+# BTunnel Signaling Server — Docker Compose
+#
+# Deploy the signaling server with:
+#   docker-compose -f docker-compose.signaling.yml up -d
+#
+# The signaling server only handles SDP/ICE metadata exchange.
+# It does NOT relay actual tunnel traffic — that goes P2P.
+
+version: "3.8"
+
+services:
+  signaling:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.signaling
+    container_name: btunnel-signaling
+    restart: unless-stopped
+    ports:
+      - "8443:9090"
+    environment:
+      - BTUNNEL_SIGNAL_ADDR=:9090
+      - BTUNNEL_TLS_CERT=/etc/btunnel/certs/cert.pem
+      - BTUNNEL_TLS_KEY=/etc/btunnel/certs/key.pem
+    volumes:
+      - /etc/btunnel/certs:/etc/btunnel/certs:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "--no-check-certificate", "https://localhost:9090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "btunnel.service=signaling"
+      - "btunnel.version=0.1.0"
