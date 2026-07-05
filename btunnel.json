@@ -1,0 +1,9 @@
+{
+  "signal": "wss://handshake.btunnel.dpdns.org:8443/ws",
+  "tunnels": {
+    "test-web": {
+      "type": "web",
+      "target": "localhost:3030"
+    }
+  }
+}
